@@ -1,0 +1,2 @@
+# No runtime dependency is required for the included scripts.
+# Plot generation uses the Python standard library and writes SVG files.

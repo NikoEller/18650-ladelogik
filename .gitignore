@@ -1,0 +1,15 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Local Pico runtime logs
+firmware/charge_log.csv
+firmware/*.log
+
+# Editor metadata
+.idea/
+.vscode/
+
