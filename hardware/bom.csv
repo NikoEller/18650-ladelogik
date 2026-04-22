@@ -1,0 +1,11 @@
+Position,Bauteil,Beispiel/Spezifikation,Hinweis
+1,Raspberry Pi Pico,RP2040 mit MicroPython,3.3-V-Logik fuer Steuerung und I2C
+2,18650-Li-Ion-Zelle,Geschuetzte Einzelzelle oder Zelle mit Schutzschaltung,Nur mit passender Schutzschaltung verwenden
+3,TP4056-Lademodul,CC/CV-Modul mit Schutzschaltung,Uebernimmt den eigentlichen Ladevorgang
+4,Strom-/Spannungssensor,INA219 0.1 Ohm I2C-Modul,Alternativ INA226 mit angepasstem Treiber
+5,Temperatursensor,DS18B20 wasserdicht oder 10-kOhm-NTC,Direkt an der Zelle thermisch ankoppeln
+6,Relaismodul,3.3-V-kompatibler Eingang oder Treiberstufe,Schaltet nur 5 V Eingang des TP4056
+7,Widerstand,4.7 kOhm Pull-up fuer DS18B20 OneWire,VDD nach DATA
+8,Kabel/Breadboard,ausreichend dimensionierte Leitungen,Kontaktwiderstaende gering halten
+9,Optional OLED,SSD1306 128x64 I2C,Statusanzeige im Feldversuch
+

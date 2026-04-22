@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Logisches Verdrahtungsschema fuer den 18650 Battery Charge Supervisor</title>
+  <desc id="desc">Raspberry Pi Pico misst ueber INA219 und DS18B20, ein Relais schaltet nur die 5 Volt Versorgung des TP4056-Lademoduls.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#273447"/>
+    </marker>
+    <style>
+      .box { fill: #f8fafc; stroke: #273447; stroke-width: 2.5; rx: 14; }
+      .power { fill: none; stroke: #b3261e; stroke-width: 5; stroke-linecap: round; marker-end: url(#arrow); }
+      .sense { fill: none; stroke: #2454a6; stroke-width: 3.5; stroke-linecap: round; marker-end: url(#arrow); }
+      .logic { fill: none; stroke: #23845b; stroke-width: 3.5; stroke-linecap: round; marker-end: url(#arrow); }
+      .ground { fill: none; stroke: #58616d; stroke-width: 3; stroke-linecap: round; }
+      .title { font: 700 24px Arial, sans-serif; fill: #17202a; }
+      .label { font: 600 17px Arial, sans-serif; fill: #17202a; }
+      .small { font: 14px Arial, sans-serif; fill: #3b4654; }
+      .pin { font: 13px Arial, sans-serif; fill: #ffffff; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="720" fill="#ffffff"/>
+  <text x="54" y="58" class="title">18650 Battery Charge Supervisor - logische Verdrahtung</text>
+  <text x="54" y="86" class="small">TP4056 laedt sicher per CC/CV; Pico ueberwacht nur Messwerte, Relais und Logging.</text>
+
+  <rect x="60" y="145" width="230" height="170" class="box"/>
+  <text x="90" y="185" class="label">USB 5 V Quelle</text>
+  <text x="90" y="214" class="small">Netzteil oder USB-Port</text>
+  <text x="90" y="240" class="small">Stromfaehig fuer TP4056</text>
+
+  <rect x="380" y="135" width="220" height="190" class="box"/>
+  <text x="425" y="178" class="label">Relaismodul</text>
+  <text x="414" y="207" class="small">Kontakt in 5-V-Leitung</text>
+  <text x="414" y="233" class="small">3.3-V-Logik oder Treiber</text>
+
+  <rect x="700" y="135" width="250" height="190" class="box"/>
+  <text x="747" y="178" class="label">TP4056 Modul</text>
+  <text x="735" y="207" class="small">CC/CV-Lader mit Schutz</text>
+  <text x="735" y="233" class="small">IN+/IN- und B+/B-</text>
+
+  <rect x="745" y="430" width="190" height="130" class="box"/>
+  <text x="787" y="475" class="label">18650 Zelle</text>
+  <text x="779" y="504" class="small">geschuetzt</text>
+  <text x="779" y="530" class="small">oder Schutzschaltung</text>
+
+  <rect x="1000" y="355" width="155" height="120" class="box"/>
+  <text x="1034" y="401" class="label">INA219</text>
+  <text x="1020" y="429" class="small">I2C Sensor</text>
+
+  <rect x="1000" y="520" width="155" height="95" class="box"/>
+  <text x="1027" y="557" class="label">DS18B20</text>
+  <text x="1020" y="584" class="small">an der Zelle</text>
+
+  <rect x="95" y="425" width="250" height="180" class="box"/>
+  <text x="147" y="468" class="label">Raspberry Pi Pico</text>
+  <text x="128" y="497" class="small">GP4 SDA, GP5 SCL</text>
+  <text x="128" y="523" class="small">GP15 Relais</text>
+  <text x="128" y="549" class="small">GP16 OneWire</text>
+
+  <path d="M 290 205 C 325 205, 345 205, 380 205" class="power"/>
+  <text x="305" y="190" class="small">5 V</text>
+  <path d="M 600 205 C 635 205, 665 205, 700 205" class="power"/>
+  <text x="620" y="190" class="small">geschaltete 5 V</text>
+
+  <path d="M 825 325 L 825 430" class="power"/>
+  <text x="838" y="380" class="small">B+/B-</text>
+  <path d="M 950 445 C 975 445, 980 415, 1000 415" class="sense"/>
+  <path d="M 1000 565 C 970 565, 963 530, 935 515" class="sense"/>
+  <path d="M 345 485 C 560 485, 765 390, 1000 390" class="sense"/>
+  <text x="510" y="455" class="small">I2C: SDA/SCL</text>
+  <path d="M 345 520 C 540 520, 760 560, 1000 565" class="sense"/>
+  <text x="505" y="548" class="small">OneWire Temperatur</text>
+  <path d="M 345 545 C 370 455, 370 330, 470 325" class="logic"/>
+  <text x="364" y="409" class="small">GP15 Relais-IN</text>
+
+  <path d="M 175 315 L 175 345 L 825 345 L 825 325" class="ground"/>
+  <path d="M 220 605 L 220 650 L 825 650 L 825 560" class="ground"/>
+  <path d="M 1078 475 L 1078 650" class="ground"/>
+  <text x="420" y="674" class="small">Gemeinsame Masse fuer Pico, Sensoren und TP4056-Eingang</text>
+
+  <rect x="52" y="650" width="18" height="18" fill="#b3261e"/>
+  <text x="80" y="665" class="small">Leistungspfad: nur 5-V-Eingang des Lademoduls wird geschaltet</text>
+  <rect x="430" y="650" width="18" height="18" fill="#2454a6"/>
+  <text x="458" y="665" class="small">Messsignale</text>
+  <rect x="595" y="650" width="18" height="18" fill="#23845b"/>
+  <text x="623" y="665" class="small">Steuersignal</text>
+</svg>
+
