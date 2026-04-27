@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>18650 Battery Charge Supervisor</title>
+    <meta
+      name="description"
+      content="Bewerbungsprojekt: Raspberry Pi Pico ueberwacht einen TP4056-Ladevorgang fuer eine geschuetzte 18650-Zelle."
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="nav" aria-label="Hauptnavigation">
+        <a class="brand" href="#top">18650 Charge Supervisor</a>
+        <div class="nav-links">
+          <a href="#regelung">Regelung</a>
+          <a href="#hardware">Hardware</a>
+          <a href="#daten">Messdaten</a>
+          <a href="#sicherheit">Sicherheit</a>
+        </div>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero section">
+        <div class="hero-copy">
+          <p class="eyebrow">Raspberry Pi Pico · MicroPython · Regelungstechnik</p>
+          <h1>18650 Battery Charge Supervisor</h1>
+          <p class="lead">
+            Ein uebergeordneter Lade-Waechter fuer eine geschuetzte 18650-Zelle:
+            Der TP4056 laedt sicher per CC/CV, der Pico misst, entscheidet,
+            schaltet die 5-V-Freigabe und dokumentiert den Verlauf.
+          </p>
+          <div class="hero-actions" aria-label="Projektkennzahlen">
+            <span>3,85 V Einschaltpunkt</span>
+            <span>4,00 V Ausschaltpunkt</span>
+            <span>45 Grad C Notabschaltung</span>
+          </div>
+        </div>
+        <div class="hero-visual" aria-label="Systemuebersicht">
+          <div class="signal-line line-a"></div>
+          <div class="signal-line line-b"></div>
+          <div class="system-block pico">
+            <strong>Pico</strong>
+            <span>Messen · Loggen · Relais</span>
+          </div>
+          <div class="system-block relay">
+            <strong>Relais</strong>
+            <span>5 V Freigabe</span>
+          </div>
+          <div class="system-block charger">
+            <strong>TP4056</strong>
+            <span>CC/CV Lader</span>
+          </div>
+          <div class="battery" aria-hidden="true">
+            <span></span>
+          </div>
+        </div>
+      </section>
+
+      <section id="motivation" class="section two-column">
+        <div>
+          <p class="eyebrow">Motivation</p>
+          <h2>Klare Rollen statt riskanter Eigenbau-Lader</h2>
+        </div>
+        <div class="text-flow">
+          <p>
+            Li-Ion-Zellen verlangen eine kontrollierte CC/CV-Ladekurve. Dieses
+            Projekt zeigt deshalb bewusst keine selbstgebaute Ladeelektronik,
+            sondern eine sichere Aufgabenverteilung: Das fertige TP4056-Modul
+            laedt, der Pico ueberwacht die Umgebung und dokumentiert das
+            Verhalten.
+          </p>
+          <p>
+            Genau diese Grenze macht das Projekt fuer eine Bewerbung spannend:
+            Es verbindet Regelungstechnik, Embedded-Software, Sensorik,
+            Datenanalyse und Sicherheitsdenken in einem kompakten Aufbau.
+          </p>
+        </div>
+      </section>
+
+      <section id="regelung" class="section">
+        <div class="section-heading">
+          <p class="eyebrow">Regelungstechnik</p>
+          <h2>Zweipunktregler mit Hysterese</h2>
+          <p>
+            Die Stellgroesse ist binaer: TP4056-Eingang freigeben oder trennen.
+            Ein PID-Regler waere fachlich falsch, weil der Pico den Ladestrom
+            nicht kontinuierlich fuehren soll.
+          </p>
+        </div>
+        <div class="metrics">
+          <article>
+            <span class="metric-value">3,85 V</span>
+            <h3>Laden ein</h3>
+            <p>Unterer Hysteresepunkt fuer die Freigabe des TP4056.</p>
+          </article>
+          <article>
+            <span class="metric-value">4,00 V</span>
+            <h3>Laden aus</h3>
+            <p>Oberer Schaltpunkt, bewusst unterhalb der typischen Ladeschlussspannung.</p>
+          </article>
+          <article>
+            <span class="metric-value">45 Grad C</span>
+            <h3>Notabschaltung</h3>
+            <p>Temperaturfehler wird gelatcht, das Relais bleibt abgeschaltet.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="hardware" class="section two-column">
+        <div>
+          <p class="eyebrow">Hardware</p>
+          <h2>Messung, Freigabe und Schutz</h2>
+        </div>
+        <div class="hardware-grid">
+          <article>
+            <h3>Raspberry Pi Pico</h3>
+            <p>Fuehrt die Messschleife aus, entscheidet per Hysterese und schreibt CSV-Logs.</p>
+          </article>
+          <article>
+            <h3>TP4056 mit Schutzschaltung</h3>
+            <p>Uebernimmt den eigentlichen Li-Ion-Ladevorgang mit CC/CV-Verhalten.</p>
+          </article>
+          <article>
+            <h3>INA219</h3>
+            <p>Liefert Zellspannung und Ladestrom per I2C fuer Logging und Regelentscheidung.</p>
+          </article>
+          <article>
+            <h3>DS18B20 oder NTC</h3>
+            <p>Ueberwacht die Zelltemperatur direkt am Akkugehaeuse.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="schaltplan" class="section">
+        <div class="section-heading">
+          <p class="eyebrow">Schaltplan</p>
+          <h2>Relais nur im 5-V-Pfad</h2>
+          <p>
+            Der wichtigste Sicherheitsaspekt ist die Position des Relais:
+            Es trennt die Versorgung des Lademoduls, nicht den Batteriezweig.
+          </p>
+        </div>
+        <figure class="wide-figure">
+          <img src="assets/hardware/wiring_diagram.svg" alt="Logisches Verdrahtungsschema mit Pico, Relais, TP4056, INA219, DS18B20 und 18650-Zelle" />
+          <figcaption>Logische Verdrahtung fuer den beaufsichtigten Demonstrationsaufbau.</figcaption>
+        </figure>
+      </section>
+
+      <section id="code" class="section code-section">
+        <div class="section-heading">
+          <p class="eyebrow">MicroPython-Code</p>
+          <h2>Messschleife mit Fehlerlatch</h2>
+          <p>
+            Die Firmware misst Spannung, Strom und Temperatur, berechnet den
+            Relaiszustand und schreibt jede Probe in eine CSV-Datei.
+          </p>
+        </div>
+        <pre><code>if relay_on and voltage_v &gt;= CHARGE_OFF_V:
+    relay_on = False
+elif not relay_on and voltage_v &lt;= CHARGE_ON_V:
+    relay_on = True
+
+if temperature_c &gt;= TEMP_CUTOFF_C:
+    relay_on = False
+    fault_latched = True</code></pre>
+      </section>
+
+      <section id="daten" class="section">
+        <div class="section-heading">
+          <p class="eyebrow">Messdaten und Plots</p>
+          <h2>Simulierter Testlauf</h2>
+          <p>
+            Die Daten bilden einen plausiblen TP4056-Ladeverlauf mit Tapering,
+            Temperaturtraegheit und Relais-Hysterese ab.
+          </p>
+        </div>
+        <div class="plot-grid">
+          <figure>
+            <img src="assets/plots/voltage_over_time.svg" alt="Plot der Zellspannung ueber Zeit" />
+            <figcaption>Spannung ueber Zeit mit Hysteresegrenzen.</figcaption>
+          </figure>
+          <figure>
+            <img src="assets/plots/current_over_time.svg" alt="Plot des Ladestroms ueber Zeit" />
+            <figcaption>TP4056-aehnlicher Stromverlauf.</figcaption>
+          </figure>
+          <figure>
+            <img src="assets/plots/temperature_over_time.svg" alt="Plot der Temperatur ueber Zeit" />
+            <figcaption>Temperaturverlauf mit Abschaltgrenze.</figcaption>
+          </figure>
+          <figure>
+            <img src="assets/plots/relay_state_over_time.svg" alt="Plot des Relaiszustands ueber Zeit" />
+            <figcaption>Relaiszustand als Ergebnis des Zweipunktreglers.</figcaption>
+          </figure>
+        </div>
+        <figure class="wide-figure">
+          <img src="assets/plots/setpoint_vs_actual.svg" alt="Vergleich von Sollbereich und Istwert" />
+          <figcaption>Vergleich Sollbereich und Istwert.</figcaption>
+        </figure>
+      </section>
+
+      <section id="sicherheit" class="section safety">
+        <div>
+          <p class="eyebrow">Sicherheit</p>
+          <h2>Beaufsichtigter Demonstrationsaufbau</h2>
+        </div>
+        <ul>
+          <li>Keine Software erzeugt eine Ladecharakteristik fuer die Zelle.</li>
+          <li>Der TP4056 bleibt das einzige Bauteil, das CC/CV-Laden ausfuehrt.</li>
+          <li>Das Relais trennt nur die 5-V-Versorgung des Lademoduls.</li>
+          <li>Echte Tests erfolgen nur mit Schutzschaltung, Aufsicht und brandsicherer Umgebung.</li>
+        </ul>
+      </section>
+
+      <section id="fazit" class="section two-column">
+        <div>
+          <p class="eyebrow">Fazit</p>
+          <h2>Ein kleines System mit viel Ingenieursinhalt</h2>
+        </div>
+        <div class="text-flow">
+          <p>
+            Das Projekt zeigt einen vollstaendigen Weg von Embedded-Firmware
+            ueber Hardware-Dokumentation bis zur Datenauswertung. Die technische
+            Entscheidung fuer einen Zweipunktregler ist einfach, nachvollziehbar
+            und passend zur binaeren Stellgroesse.
+          </p>
+          <p>
+            Durch die bewusste Abgrenzung zum eigentlichen Li-Ion-Laden bleibt
+            die Loesung fachlich sauber: Der Pico beaufsichtigt, der TP4056 laedt.
+          </p>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
