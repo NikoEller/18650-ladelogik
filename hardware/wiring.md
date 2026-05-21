@@ -1,4 +1,4 @@
-# Logisches Verdrahtungsschema
+# Logisches Verdrahtungsschema fuer 18650 Ladelogik
 
 Das Projekt trennt klar zwischen sicherem Laden und uebergeordneter
 Ueberwachung:
@@ -42,4 +42,3 @@ Datenblatt beziehungsweise das Layout des konkreten Moduls massgeblich.
   Unterlage.
 - Bei Auffaelligkeiten wie Erwaermung, Geruch, Aufblaehen oder Spannung ausser
   Spezifikation sofort abschalten.
-

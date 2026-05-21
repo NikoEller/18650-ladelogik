@@ -1,4 +1,4 @@
-"""18650 Battery Charge Supervisor for Raspberry Pi Pico.
+"""18650 Ladelogik for Raspberry Pi Pico.
 
 The firmware supervises a finished TP4056 Li-Ion charger module:
 - measure cell voltage/current with an INA219
@@ -99,7 +99,7 @@ class OptionalDisplay:
         if self.display is None:
             return
         self.display.fill(0)
-        self.display.text("18650 Supervisor", 0, 0)
+        self.display.text("18650 Ladelogik", 0, 0)
         self.display.text("U:{:.3f} V".format(voltage_v), 0, 14)
         self.display.text("I:{:.0f} mA".format(current_ma), 0, 26)
         temp_text = "--" if temp_c is None else "{:.1f} C".format(temp_c)
@@ -254,4 +254,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -1,4 +1,4 @@
-"""Configuration for the 18650 Battery Charge Supervisor.
+"""Configuration for 18650 Ladelogik.
 
 The Pico supervises a finished TP4056 charger module. It does not implement
 CC/CV charging itself.
@@ -52,4 +52,3 @@ TEMP_RESUME_C = 38.0
 SAMPLE_INTERVAL_S = 5
 LOG_FILE = "charge_log.csv"
 STATUS_PRINT = True
-

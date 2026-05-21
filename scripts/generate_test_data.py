@@ -1,9 +1,10 @@
-"""Generate deterministic simulated charge supervision data.
+"""Generate deterministic simulated data for 18650 Ladelogik.
 
 The model is intentionally simple but plausible:
 - TP4056-like current: high current below the upper range, taper near 4 V
 - relay hysteresis: ON below 3.85 V, OFF above 4.00 V
 - thermal inertia: temperature rises while charging and relaxes when idle
+- PID reference controller: calculated for analysis, not used as charger output
 """
 
 from __future__ import annotations
@@ -20,6 +21,11 @@ OUT_FILE = ROOT / "data" / "simulated_charge_log.csv"
 
 LOW_V = 3.85
 HIGH_V = 4.00
+PID_SETPOINT_V = (LOW_V + HIGH_V) / 2.0
+PID_KP = 850.0  # percent per volt
+PID_KI = 2.4  # percent per volt-minute
+PID_KD = 55.0  # percent-minute per volt
+PID_INTEGRAL_LIMIT = 8.0  # volt-minutes
 TEMP_CUTOFF_C = 45.0
 CAPACITY_AH = 2.6
 DT_S = 60
@@ -56,6 +62,11 @@ def simulate() -> list[dict[str, object]]:
     ambient_c = 22.8
     rows: list[dict[str, object]] = []
     measured_voltage = ocv_from_soc(soc)
+    pid_integral = 0.0
+    previous_error = PID_SETPOINT_V - measured_voltage
+
+    def clamp(value: float, low: float, high: float) -> float:
+        return max(low, min(high, value))
 
     for index in range(int(TOTAL_HOURS * 3600 / DT_S) + 1):
         timestamp = start + timedelta(seconds=index * DT_S)
@@ -88,6 +99,20 @@ def simulate() -> list[dict[str, object]]:
         ambient_c = 22.8 + 0.7 * math.sin(index / 130.0)
         measured_voltage = ocv_from_soc(soc) + terminal_lift + rng.gauss(0, 0.004)
         measured_voltage = max(2.75, min(4.18, measured_voltage))
+        error_v = PID_SETPOINT_V - measured_voltage
+        dt_min = DT_S / 60.0
+        pid_integral = clamp(
+            pid_integral + error_v * dt_min,
+            -PID_INTEGRAL_LIMIT,
+            PID_INTEGRAL_LIMIT,
+        )
+        derivative_v_per_min = (error_v - previous_error) / dt_min
+        pid_p = PID_KP * error_v
+        pid_i = PID_KI * pid_integral
+        pid_d = PID_KD * derivative_v_per_min
+        pid_output = clamp(pid_p + pid_i + pid_d, 0.0, 100.0)
+        pid_relay_request = 1 if pid_output >= 50.0 and temperature_c < TEMP_CUTOFF_C else 0
+        previous_error = error_v
 
         rows.append(
             {
@@ -100,6 +125,13 @@ def simulate() -> list[dict[str, object]]:
                 "soc_percent": round(soc, 1),
                 "setpoint_low_v": LOW_V,
                 "setpoint_high_v": HIGH_V,
+                "pid_setpoint_v": round(PID_SETPOINT_V, 4),
+                "voltage_error_v": round(error_v, 4),
+                "pid_p_percent": round(pid_p, 2),
+                "pid_i_percent": round(pid_i, 2),
+                "pid_d_percent": round(pid_d, 2),
+                "pid_output_percent": round(pid_output, 1),
+                "pid_relay_request": pid_relay_request,
                 "temperature_cutoff_c": TEMP_CUTOFF_C,
                 "mode": mode,
                 "fault_reason": "",
@@ -113,7 +145,7 @@ def main() -> None:
     OUT_FILE.parent.mkdir(parents=True, exist_ok=True)
     rows = simulate()
     with OUT_FILE.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(rows[0].keys()))
+        writer = csv.DictWriter(handle, fieldnames=list(rows[0].keys()), lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
     print(f"Wrote {len(rows)} rows to {OUT_FILE}")
@@ -121,4 +153,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

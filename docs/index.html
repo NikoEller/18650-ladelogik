@@ -3,19 +3,20 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>18650 Battery Charge Supervisor</title>
+    <title>18650 Ladelogik</title>
     <meta
       name="description"
-      content="Bewerbungsprojekt: Raspberry Pi Pico ueberwacht einen TP4056-Ladevorgang fuer eine geschuetzte 18650-Zelle."
+      content="Bewerbungsprojekt: Raspberry Pi Pico ueberwacht einen TP4056-Ladevorgang fuer eine geschuetzte 18650-Zelle und wertet Hysterese sowie PID-Regelung mathematisch aus."
     />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <header class="site-header">
       <nav class="nav" aria-label="Hauptnavigation">
-        <a class="brand" href="#top">18650 Charge Supervisor</a>
+        <a class="brand" href="#top">18650 Ladelogik</a>
         <div class="nav-links">
           <a href="#regelung">Regelung</a>
+          <a href="#pid">PID</a>
           <a href="#hardware">Hardware</a>
           <a href="#daten">Messdaten</a>
           <a href="#sicherheit">Sicherheit</a>
@@ -27,14 +28,16 @@
       <section class="hero section">
         <div class="hero-copy">
           <p class="eyebrow">Raspberry Pi Pico · MicroPython · Regelungstechnik</p>
-          <h1>18650 Battery Charge Supervisor</h1>
+          <h1>18650 Ladelogik</h1>
           <p class="lead">
             Ein uebergeordneter Lade-Waechter fuer eine geschuetzte 18650-Zelle:
             Der TP4056 laedt sicher per CC/CV, der Pico misst, entscheidet,
-            schaltet die 5-V-Freigabe und dokumentiert den Verlauf.
+            schaltet die 5-V-Freigabe und dokumentiert den Verlauf mit sauberer
+            Regelungsanalyse.
           </p>
           <div class="hero-actions" aria-label="Projektkennzahlen">
             <span>3,85 V Einschaltpunkt</span>
+            <span>3,925 V PID-Sollwert</span>
             <span>4,00 V Ausschaltpunkt</span>
             <span>45 Grad C Notabschaltung</span>
           </div>
@@ -63,20 +66,19 @@
       <section id="motivation" class="section two-column">
         <div>
           <p class="eyebrow">Motivation</p>
-          <h2>Klare Rollen statt riskanter Eigenbau-Lader</h2>
+          <h2>Klare Rollen, klare Mathematik</h2>
         </div>
         <div class="text-flow">
           <p>
-            Li-Ion-Zellen verlangen eine kontrollierte CC/CV-Ladekurve. Dieses
-            Projekt zeigt deshalb bewusst keine selbstgebaute Ladeelektronik,
-            sondern eine sichere Aufgabenverteilung: Das fertige TP4056-Modul
-            laedt, der Pico ueberwacht die Umgebung und dokumentiert das
-            Verhalten.
+            Li-Ion-Zellen verlangen eine kontrollierte CC/CV-Ladekurve. 18650
+            Ladelogik baut deshalb bewusst keinen Software-Lader, sondern eine
+            sichere Aufgabenverteilung: Das fertige TP4056-Modul laedt, der Pico
+            ueberwacht die Umgebung und dokumentiert das Verhalten.
           </p>
           <p>
-            Genau diese Grenze macht das Projekt fuer eine Bewerbung spannend:
-            Es verbindet Regelungstechnik, Embedded-Software, Sensorik,
-            Datenanalyse und Sicherheitsdenken in einem kompakten Aufbau.
+            Die Regelungstechnik wird trotzdem sichtbar: Hysterese, Grenzwerte,
+            Fehlerlatch und ein angewandter PID-Referenzregler werden aus den
+            Messdaten berechnet und in Plots ausgewertet.
           </p>
         </div>
       </section>
@@ -86,9 +88,9 @@
           <p class="eyebrow">Regelungstechnik</p>
           <h2>Zweipunktregler mit Hysterese</h2>
           <p>
-            Die Stellgroesse ist binaer: TP4056-Eingang freigeben oder trennen.
-            Ein PID-Regler waere fachlich falsch, weil der Pico den Ladestrom
-            nicht kontinuierlich fuehren soll.
+            Die reale Stellgroesse ist binaer: TP4056-Eingang freigeben oder
+            trennen. Deshalb ist die Hardwarelogik ein robuster
+            Zweipunktregler mit Sicherheitsueberwachung.
           </p>
         </div>
         <div class="metrics">
@@ -108,6 +110,63 @@
             <p>Temperaturfehler wird gelatcht, das Relais bleibt abgeschaltet.</p>
           </article>
         </div>
+        <div class="math-grid">
+          <article class="formula-card">
+            <h3>Schaltgesetz</h3>
+            <pre><code>u[k] = 1, wenn y[k] &lt;= 3,85 V
+u[k] = 0, wenn y[k] &gt;= 4,00 V
+u[k] = u[k-1], sonst</code></pre>
+          </article>
+          <article class="formula-card">
+            <h3>Interpretation</h3>
+            <p>
+              <code>y[k]</code> ist die gemessene Zellspannung, <code>u[k]</code> der Relaiszustand.
+              Die Zone zwischen 3,85 V und 4,00 V ist die Hysterese. Sie
+              verhindert schnelles Klappern des Relais, wenn Messrauschen oder
+              Lastspruenge nahe am Schaltpunkt liegen.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section id="pid" class="section pid-section">
+        <div class="section-heading">
+          <p class="eyebrow">PID-Regelung angewandt</p>
+          <h2>Kontinuierlicher Referenzregler fuer die Analyse</h2>
+          <p>
+            Ein PID-Regler wird auf die Simulationsdaten angewandt, um die
+            Regelabweichung fachlich zu bewerten. Sein Ausgang ist ein
+            theoretischer Freigabegrad von 0 % bis 100 %. Er steuert nicht die
+            Zelle und ersetzt nicht den TP4056.
+          </p>
+        </div>
+        <div class="math-grid">
+          <article class="formula-card equation">
+            <h3>Regelabweichung</h3>
+            <p><var>w</var> = (3,85 V + 4,00 V) / 2 = 3,925 V</p>
+            <p><var>e[k]</var> = <var>w</var> - <var>y[k]</var></p>
+          </article>
+          <article class="formula-card equation">
+            <h3>PID-Gleichung</h3>
+            <p><var>I[k]</var> = clamp(<var>I[k-1]</var> + <var>e[k]</var> &middot; &Delta;t)</p>
+            <p><var>D[k]</var> = (<var>e[k]</var> - <var>e[k-1]</var>) / &Delta;t</p>
+            <p><var>u_pid[k]</var> = sat(<var>Kp</var>e + <var>Ki</var>I + <var>Kd</var>D)</p>
+          </article>
+          <article class="formula-card">
+            <h3>Parameter</h3>
+            <dl class="parameter-list">
+              <div><dt>Kp</dt><dd>850 %/V</dd></div>
+              <div><dt>Ki</dt><dd>2,4 %/(V min)</dd></div>
+              <div><dt>Kd</dt><dd>55 % min/V</dd></div>
+              <div><dt>I-Grenze</dt><dd>-8 bis +8 V min</dd></div>
+            </dl>
+          </article>
+        </div>
+        <p class="callout">
+          In echter Hardware waere der PID-Ausgang nur sinnvoll, wenn es einen
+          sicheren proportionalen Aktor gaebe. Hier existiert nur ein Relais,
+          also bleibt die reale Entscheidung Hysterese plus Grenzwertlogik.
+        </p>
       </section>
 
       <section id="hardware" class="section two-column">
@@ -172,10 +231,10 @@ if temperature_c &gt;= TEMP_CUTOFF_C:
       <section id="daten" class="section">
         <div class="section-heading">
           <p class="eyebrow">Messdaten und Plots</p>
-          <h2>Simulierter Testlauf</h2>
+          <h2>Simulierter Testlauf mit PID-Auswertung</h2>
           <p>
             Die Daten bilden einen plausiblen TP4056-Ladeverlauf mit Tapering,
-            Temperaturtraegheit und Relais-Hysterese ab.
+            Temperaturtraegheit, Relais-Hysterese und PID-Referenzausgang ab.
           </p>
         </div>
         <div class="plot-grid">
@@ -195,6 +254,14 @@ if temperature_c &gt;= TEMP_CUTOFF_C:
             <img src="assets/plots/relay_state_over_time.svg" alt="Plot des Relaiszustands ueber Zeit" />
             <figcaption>Relaiszustand als Ergebnis des Zweipunktreglers.</figcaption>
           </figure>
+          <figure>
+            <img src="assets/plots/pid_reference_output.svg" alt="PID-Referenzausgang im Vergleich zum Relaiszustand" />
+            <figcaption>Kontinuierlicher PID-Ausgang und daraus abgeleitete Schaltschwelle.</figcaption>
+          </figure>
+          <figure>
+            <img src="assets/plots/pid_terms.svg" alt="P-, I- und D-Anteile des Referenzreglers" />
+            <figcaption>P-, I- und D-Anteile der angewandten Auswertung.</figcaption>
+          </figure>
         </div>
         <figure class="wide-figure">
           <img src="assets/plots/setpoint_vs_actual.svg" alt="Vergleich von Sollbereich und Istwert" />
@@ -211,6 +278,7 @@ if temperature_c &gt;= TEMP_CUTOFF_C:
           <li>Keine Software erzeugt eine Ladecharakteristik fuer die Zelle.</li>
           <li>Der TP4056 bleibt das einzige Bauteil, das CC/CV-Laden ausfuehrt.</li>
           <li>Das Relais trennt nur die 5-V-Versorgung des Lademoduls.</li>
+          <li>Der PID-Regler ist Analyse und Vergleich, kein echter Ladeaktor.</li>
           <li>Echte Tests erfolgen nur mit Schutzschaltung, Aufsicht und brandsicherer Umgebung.</li>
         </ul>
       </section>
@@ -222,14 +290,14 @@ if temperature_c &gt;= TEMP_CUTOFF_C:
         </div>
         <div class="text-flow">
           <p>
-            Das Projekt zeigt einen vollstaendigen Weg von Embedded-Firmware
-            ueber Hardware-Dokumentation bis zur Datenauswertung. Die technische
-            Entscheidung fuer einen Zweipunktregler ist einfach, nachvollziehbar
-            und passend zur binaeren Stellgroesse.
+            18650 Ladelogik zeigt einen vollstaendigen Weg von Embedded-Firmware
+            ueber Hardware-Dokumentation bis zur Datenauswertung. Die reale
+            Entscheidung per Hysterese passt zur binaeren Stellgroesse.
           </p>
           <p>
-            Durch die bewusste Abgrenzung zum eigentlichen Li-Ion-Laden bleibt
-            die Loesung fachlich sauber: Der Pico beaufsichtigt, der TP4056 laedt.
+            Die PID-Auswertung macht die klassische Regelungstechnik sichtbar,
+            ohne die sichere Grenze zu verwischen: Der Pico beaufsichtigt, der
+            TP4056 laedt.
           </p>
         </div>
       </section>

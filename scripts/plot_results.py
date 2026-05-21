@@ -52,6 +52,13 @@ def read_rows(path: Path) -> dict[str, list[float]]:
         "soc": series("soc_percent"),
         "low": series("setpoint_low_v"),
         "high": series("setpoint_high_v"),
+        "pid_setpoint": series("pid_setpoint_v"),
+        "voltage_error": series("voltage_error_v"),
+        "pid_p": series("pid_p_percent"),
+        "pid_i": series("pid_i_percent"),
+        "pid_d": series("pid_d_percent"),
+        "pid_output": series("pid_output_percent"),
+        "pid_relay_request": series("pid_relay_request"),
         "temp_cutoff": series("temperature_cutoff_c"),
     }
 
@@ -111,11 +118,15 @@ def render_plot(
         all_values.extend(float(v) for v in band["low"])  # type: ignore[index]
         all_values.extend(float(v) for v in band["high"])  # type: ignore[index]
 
+    explicit_y_min = y_min is not None
+    explicit_y_max = y_max is not None
     y_min = min(all_values) if y_min is None else y_min
     y_max = max(all_values) if y_max is None else y_max
     margin = (y_max - y_min) * 0.08 if y_max > y_min else 1
-    y_min -= margin
-    y_max += margin
+    if not explicit_y_min:
+        y_min -= margin
+    if not explicit_y_max:
+        y_max += margin
 
     plot_left = PADDING["left"]
     plot_right = WIDTH - PADDING["right"]
@@ -240,6 +251,45 @@ def make_plots(data: dict[str, list[float]]) -> None:
         ],
         bands=[{"low": data["low"], "high": data["high"], "color": "#f5eadf", "opacity": 0.8}],
         filename="setpoint_vs_actual.svg",
+    )
+
+    render_plot(
+        title="PID-Referenzausgang",
+        ylabel="Ausgang [%]",
+        x=t,
+        y_min=0,
+        y_max=100,
+        series=[
+            {"label": "u_PID", "values": data["pid_output"], "color": COLORS["blue"]},
+            {
+                "label": "Relais real",
+                "values": [value * 100.0 for value in data["relay"]],
+                "color": COLORS["green"],
+                "step": True,
+                "width": 2,
+            },
+            {
+                "label": "PID Schwelle",
+                "values": [value * 100.0 for value in data["pid_relay_request"]],
+                "color": COLORS["orange"],
+                "step": True,
+                "width": 2,
+            },
+        ],
+        hlines=[{"value": 50.0, "label": "50 Prozent", "color": COLORS["gray"]}],
+        filename="pid_reference_output.svg",
+    )
+
+    render_plot(
+        title="PID-Anteile",
+        ylabel="Anteil [%]",
+        x=t,
+        series=[
+            {"label": "P-Anteil", "values": data["pid_p"], "color": COLORS["blue"]},
+            {"label": "I-Anteil", "values": data["pid_i"], "color": COLORS["green"]},
+            {"label": "D-Anteil", "values": data["pid_d"], "color": COLORS["red"]},
+        ],
+        filename="pid_terms.svg",
     )
 
 

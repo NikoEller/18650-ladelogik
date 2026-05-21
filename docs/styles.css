@@ -288,7 +288,9 @@ h3 {
 .hardware-grid article,
 .plot-grid figure,
 .wide-figure,
-.code-section pre {
+.code-section pre,
+.formula-card,
+.callout {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
@@ -300,7 +302,8 @@ h3 {
 }
 
 .metrics p,
-.hardware-grid p {
+.hardware-grid p,
+.formula-card p {
   margin: 0;
   color: var(--muted);
 }
@@ -315,6 +318,72 @@ h3 {
 
 .hardware-grid {
   grid-template-columns: repeat(2, 1fr);
+}
+
+.math-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.pid-section .math-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.formula-card {
+  padding: 24px;
+}
+
+.formula-card pre {
+  margin: 0;
+  white-space: pre-wrap;
+  font-size: 0.96rem;
+  line-height: 1.7;
+  color: #273447;
+}
+
+.formula-card code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+
+.equation p {
+  margin-bottom: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  color: #273447;
+}
+
+.parameter-list {
+  margin: 4px 0 0;
+}
+
+.parameter-list div {
+  display: grid;
+  grid-template-columns: 62px 1fr;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.parameter-list div:last-child {
+  border-bottom: 0;
+}
+
+.parameter-list dt {
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.parameter-list dd {
+  margin: 0;
+  color: var(--muted);
+}
+
+.callout {
+  margin: 18px 0 0;
+  padding: 18px 22px;
+  color: #273447;
+  border-left: 5px solid var(--orange);
 }
 
 .wide-figure,
@@ -413,7 +482,9 @@ figcaption {
 
   .metrics,
   .hardware-grid,
-  .plot-grid {
+  .plot-grid,
+  .math-grid,
+  .pid-section .math-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -453,4 +524,3 @@ figcaption {
     height: 190px;
   }
 }
-

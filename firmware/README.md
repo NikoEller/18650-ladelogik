@@ -1,4 +1,4 @@
-# Firmware
+# Firmware fuer 18650 Ladelogik
 
 Diese MicroPython-Firmware laeuft auf einem Raspberry Pi Pico und ueberwacht
 ein fertiges TP4056-Lademodul. Der Pico misst Spannung, Strom und Temperatur,
@@ -21,4 +21,3 @@ eine CSV-Datei auf das Pico-Dateisystem.
 
 Das Projekt ersetzt kein zertifiziertes Ladegeraet und keine
 Batterieschutzschaltung.
-

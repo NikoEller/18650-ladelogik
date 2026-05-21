@@ -1,22 +1,28 @@
-# 18650 Battery Charge Supervisor mit Raspberry Pi Pico und MicroPython
+# 18650 Ladelogik mit Raspberry Pi Pico und MicroPython
 
 Ein regelungstechnisches Bewerbungsprojekt zur uebergeordneten Ueberwachung
 des Ladevorgangs einer einzelnen geschuetzten 18650-Li-Ion-Zelle. Das sichere
 CC/CV-Laden uebernimmt ein fertiges TP4056-Lademodul mit Schutzschaltung. Der
 Raspberry Pi Pico misst, schaltet die 5-V-Versorgung des Lademoduls per Relais,
-ueberwacht Grenzwerte und loggt Messdaten.
+ueberwacht Grenzwerte, loggt Messdaten und wertet die Regelung mathematisch aus.
 
 ![Logisches Verdrahtungsschema](hardware/wiring_diagram.svg)
 
 ## Projektziel
 
-Das Projekt zeigt, wie ein einfacher Zweipunktregler mit Hysterese in ein
-praxisnahes Embedded-System eingebettet wird. Im Mittelpunkt steht nicht das
-Ersetzen eines Ladegeraets, sondern die sichere Trennung der Aufgaben:
+18650 Ladelogik zeigt, wie ein einfacher, robuster Zweipunktregler mit
+Hysterese in ein praxisnahes Embedded-System eingebettet wird. Zusaetzlich
+wird ein PID-Referenzregler auf die Messdaten angewandt, um die klassische
+Regelungstechnik sauber zu erklaeren und mit der realen Relaislogik zu
+vergleichen.
+
+Die Rollen bleiben bewusst getrennt:
 
 - TP4056: eigentliche Li-Ion-Ladekurve mit Konstantstrom/Konstantspannung
 - Raspberry Pi Pico: Messung, Freigabe, Abschaltung, Logging und Auswertung
 - Relais: trennt nur die 5-V-Versorgung zum TP4056, nie die Zelle direkt
+- PID-Auswertung: mathematischer Vergleichsregler in Simulation/Analyse,
+  kein echter Ladealgorithmus fuer die Zelle
 
 ## Sicherheitshinweise
 
@@ -55,20 +61,60 @@ Die vollstaendige BOM liegt unter [`hardware/bom.csv`](hardware/bom.csv).
 
 ## Regelungskonzept
 
-Der Supervisor verwendet einen Zweipunktregler mit Hysterese:
+### Realer Regler: Zweipunktregler mit Hysterese
+
+Der Pico hat nur eine binaere Stellgroesse: Relais ein oder Relais aus. Deshalb
+ist die reale Ladefreigabe als Zweipunktregler aufgebaut:
 
 - Wenn die gemessene Zellspannung kleiner oder gleich 3,85 V ist, darf das
   Relais einschalten.
 - Wenn die Zellspannung groesser oder gleich 4,00 V ist, schaltet das Relais
   wieder ab.
+- Zwischen 3,85 V und 4,00 V bleibt der vorherige Relaiszustand erhalten.
 - Bei Ueberspannung, Unterspannung ausserhalb des sicheren Bereichs oder zu
   hoher Temperatur wird ein Fehler gelatcht und das Relais bleibt aus.
 
-Ein PID-Regler ist hier nicht sinnvoll. Die Stellgroesse ist binaer: Das
-Lademodul bekommt 5 V oder nicht. Der TP4056 regelt den eigentlichen Ladestrom
-und die Ladeschlussspannung intern. Der Pico darf daher keine kontinuierliche
-Ladekurve regeln, sondern nur eine Freigabeentscheidung mit klaren Grenzwerten
-treffen.
+Mathematisch:
+
+```text
+u_relais[k] = 1, wenn y[k] <= 3,85 V
+u_relais[k] = 0, wenn y[k] >= 4,00 V
+u_relais[k] = u_relais[k-1], sonst
+```
+
+`y[k]` ist die gemessene Zellspannung. Die Hysterese verhindert schnelles
+Takten des Relais im Grenzbereich.
+
+### Angewandter PID-Referenzregler
+
+Ein PID-Regler wird im Projekt angewandt, aber bewusst nur als
+Referenzmodell fuer Datenanalyse und Regelungsverstaendnis. Der Ausgang
+`u_pid` wird nicht an den Akku oder den TP4056 ausgegeben.
+
+Als Sollwert dient die Mitte des Hysteresebands:
+
+```text
+w = (3,85 V + 4,00 V) / 2 = 3,925 V
+e[k] = w - y[k]
+I[k] = clamp(I[k-1] + e[k] * Delta t, I_min, I_max)
+D[k] = (e[k] - e[k-1]) / Delta t
+u_pid[k] = sat(Kp * e[k] + Ki * I[k] + Kd * D[k], 0 %, 100 %)
+```
+
+Verwendete Parameter der Simulation:
+
+| Parameter | Wert | Bedeutung |
+|---|---:|---|
+| `Kp` | 850 %/V | reagiert direkt auf Spannungsabweichung |
+| `Ki` | 2,4 %/(V min) | korrigiert bleibende Abweichung langsam |
+| `Kd` | 55 % min/V | daempft schnelle Aenderungen |
+| `I_min` / `I_max` | -8 / +8 V min | Anti-Windup-Begrenzung |
+
+Die PID-Ausgabe wird als theoretische Ladefreigabe zwischen 0 % und 100 %
+interpretiert. Fuer ein echtes Relais muesste daraus wieder eine harte
+Schaltentscheidung entstehen. Genau daran sieht man den Kern der Auslegung:
+Ein PID-Regler ist lehrreich und in den Daten angewandt, die reale Hardware
+bleibt aus Sicherheitsgruenden bei Hysterese plus Grenzwertueberwachung.
 
 ## Aufbau
 
@@ -92,7 +138,7 @@ Die Firmware liegt im Ordner [`firmware/`](firmware/):
 - [`firmware/config.py`](firmware/config.py): Pins, Grenzwerte und Sensoroptionen
 - [`firmware/lib/ina219.py`](firmware/lib/ina219.py): kleiner INA219-Treiber
 
-Logfelder:
+Logfelder auf dem Pico:
 
 `timestamp`, `elapsed_s`, `cell_voltage_v`, `charge_current_mA`,
 `temperature_c`, `relay_state`, `soc_percent`, `mode`, `fault_reason`
@@ -101,7 +147,7 @@ Logfelder:
 
 Da keine realen Messwerte beiliegen, erzeugt das Projekt realistisch wirkende
 Simulationsdaten. Das Modell bildet eine TP4056-aehnliche Stromkurve, thermische
-Traegheit und den Hysterese-Schaltverlauf ab.
+Traegheit, den Hysterese-Schaltverlauf und den PID-Referenzausgang ab.
 
 ```bash
 python3 scripts/generate_test_data.py
@@ -116,8 +162,12 @@ Erzeugte Artefakte:
 - [`plots/temperature_over_time.svg`](plots/temperature_over_time.svg)
 - [`plots/relay_state_over_time.svg`](plots/relay_state_over_time.svg)
 - [`plots/setpoint_vs_actual.svg`](plots/setpoint_vs_actual.svg)
+- [`plots/pid_reference_output.svg`](plots/pid_reference_output.svg)
+- [`plots/pid_terms.svg`](plots/pid_terms.svg)
 
 ![Vergleich Sollbereich und Istwert](plots/setpoint_vs_actual.svg)
+
+![PID-Referenzausgang](plots/pid_reference_output.svg)
 
 ## Ergebnisse
 
@@ -130,12 +180,15 @@ Die Simulation zeigt das erwartete Verhalten:
 - Die Temperatur steigt waehrend der Ladephase moderat an und bleibt unterhalb
   der dokumentierten Notabschaltung.
 - Der Relaiszustand zeigt klar die Hysterese und verhindert schnelles Takten.
+- Der PID-Referenzausgang zeigt, wie ein kontinuierlicher Regler die
+  Spannungsabweichung bewerten wuerde, ohne die sichere Hardwarelogik zu
+  ersetzen.
 
 ## GitHub Pages
 
 Die Projektseite liegt im Ordner [`docs/`](docs/) und ist fuer GitHub Pages
-vorbereitet. Sie enthaelt Motivation, Regelungstechnik, Hardware, Schaltplan,
-Code-Erklaerung, Messdaten, Sicherheitskapitel und Fazit.
+vorbereitet. Sie enthaelt Motivation, Regelungstechnik, PID-Mathematik,
+Hardware, Schaltplan, Code-Erklaerung, Messdaten, Sicherheitskapitel und Fazit.
 
 ## Repository-Struktur
 
