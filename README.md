@@ -94,21 +94,42 @@ Referenzmodell fuer Datenanalyse und Regelungsverstaendnis. Der Ausgang
 Als Referenzwert dient die Mitte des Hysteresebands. Das ist kein
 Ladeschlusssollwert, sondern der neutrale Arbeitspunkt der Analyse:
 
-```text
-U_ein = 3,85 V
-U_aus = 4,00 V
-w_ref = (U_ein + U_aus) / 2 = 3,925 V
+$$
+\begin{aligned}
+U_\mathrm{ein} &= 3{,}85\,\mathrm{V} \\
+U_\mathrm{aus} &= 4{,}00\,\mathrm{V} \\
+w_\mathrm{ref} &=
+\frac{U_\mathrm{ein} + U_\mathrm{aus}}{2}
+= 3{,}925\,\mathrm{V}
+\end{aligned}
+$$
 
-e[k] = w_ref - y[k]
-S[k] = clamp(S[k-1] + e[k] * T_s, S_min, S_max)
+$$
+\begin{aligned}
+e[k] &= w_\mathrm{ref} - y[k] \\
+S[k] &=
+\operatorname{clamp}\left(
+S[k-1] + e[k] \cdot T_s,\,
+S_\mathrm{min},\,
+S_\mathrm{max}
+\right) \\
+P[k] &= K_p \cdot e[k] \\
+I[k] &= K_i \cdot S[k] \\
+D[k] &= K_d \cdot \frac{e[k] - e[k-1]}{T_s}
+\end{aligned}
+$$
 
-P[k] = Kp * e[k]
-I[k] = Ki * S[k]
-D[k] = Kd * (e[k] - e[k-1]) / T_s
-
-u_roh[k] = u0 + P[k] + I[k] + D[k]
-u_pid[k] = clamp(u_roh[k], 0 %, 100 %)
-```
+$$
+\begin{aligned}
+u_\mathrm{roh}[k] &= u_0 + P[k] + I[k] + D[k] \\
+u_\mathrm{pid}[k] &=
+\operatorname{clamp}\left(
+u_\mathrm{roh}[k],\,
+0\,\%,\,
+100\,\%
+\right)
+\end{aligned}
+$$
 
 Dabei ist `S[k]` der Integralzustand in `V min`. Die Groessen `P[k]`,
 `I[k]` und `D[k]` sind bereits Ausgangsanteile in Prozent. Der Arbeitspunkt

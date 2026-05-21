@@ -143,17 +143,75 @@ u[k] = u[k-1], sonst</code></pre>
         <div class="math-grid">
           <article class="formula-card equation">
             <h3>Regelabweichung</h3>
-            <p><var>w_ref</var> = (<var>U_ein</var> + <var>U_aus</var>) / 2</p>
-            <p><var>w_ref</var> = (3,85 V + 4,00 V) / 2 = 3,925 V</p>
-            <p><var>e[k]</var> = <var>w_ref</var> - <var>y[k]</var></p>
+            <div class="equation-stack" aria-label="PID-Regelabweichung">
+              <div class="eq">
+                <span class="lhs"><var>w</var><sub>ref</sub></span>
+                <span class="eq-symbol">=</span>
+                <span class="rhs">
+                  <span class="frac">
+                    <span><var>U</var><sub>ein</sub> + <var>U</var><sub>aus</sub></span>
+                    <span>2</span>
+                  </span>
+                </span>
+              </div>
+              <div class="eq">
+                <span class="lhs"><var>w</var><sub>ref</sub></span>
+                <span class="eq-symbol">=</span>
+                <span class="rhs">
+                  <span class="frac">
+                    <span>3,85 V + 4,00 V</span>
+                    <span>2</span>
+                  </span>
+                  <span class="eq-symbol">=</span>
+                  <span>3,925 V</span>
+                </span>
+              </div>
+              <div class="eq">
+                <span class="lhs"><var>e</var>[<var>k</var>]</span>
+                <span class="eq-symbol">=</span>
+                <span class="rhs"><var>w</var><sub>ref</sub> - <var>y</var>[<var>k</var>]</span>
+              </div>
+            </div>
           </article>
           <article class="formula-card equation">
             <h3>PID-Gleichung</h3>
-            <p><var>S[k]</var> = clamp(<var>S[k-1]</var> + <var>e[k]</var> &middot; <var>T_s</var>, <var>S_min</var>, <var>S_max</var>)</p>
-            <p><var>P[k]</var> = <var>Kp</var> &middot; <var>e[k]</var></p>
-            <p><var>I[k]</var> = <var>Ki</var> &middot; <var>S[k]</var></p>
-            <p><var>D[k]</var> = <var>Kd</var> &middot; (<var>e[k]</var> - <var>e[k-1]</var>) / <var>T_s</var></p>
-            <p><var>u_pid[k]</var> = clamp(<var>u0</var> + <var>P[k]</var> + <var>I[k]</var> + <var>D[k]</var>, 0 %, 100 %)</p>
+            <div class="equation-stack" aria-label="Diskrete PID-Gleichung">
+              <div class="eq">
+                <span class="lhs"><var>S</var>[<var>k</var>]</span>
+                <span class="eq-symbol">=</span>
+                <span class="rhs">
+                  <span class="fn">clamp</span>(<var>S</var>[<var>k</var>-1] + <var>e</var>[<var>k</var>] &middot; <var>T</var><sub>s</sub>, <var>S</var><sub>min</sub>, <var>S</var><sub>max</sub>)
+                </span>
+              </div>
+              <div class="eq">
+                <span class="lhs"><var>P</var>[<var>k</var>]</span>
+                <span class="eq-symbol">=</span>
+                <span class="rhs"><var>K</var><sub>p</sub> &middot; <var>e</var>[<var>k</var>]</span>
+              </div>
+              <div class="eq">
+                <span class="lhs"><var>I</var>[<var>k</var>]</span>
+                <span class="eq-symbol">=</span>
+                <span class="rhs"><var>K</var><sub>i</sub> &middot; <var>S</var>[<var>k</var>]</span>
+              </div>
+              <div class="eq">
+                <span class="lhs"><var>D</var>[<var>k</var>]</span>
+                <span class="eq-symbol">=</span>
+                <span class="rhs">
+                  <var>K</var><sub>d</sub> &middot;
+                  <span class="frac">
+                    <span><var>e</var>[<var>k</var>] - <var>e</var>[<var>k</var>-1]</span>
+                    <span><var>T</var><sub>s</sub></span>
+                  </span>
+                </span>
+              </div>
+              <div class="eq emphasis">
+                <span class="lhs"><var>u</var><sub>pid</sub>[<var>k</var>]</span>
+                <span class="eq-symbol">=</span>
+                <span class="rhs">
+                  <span class="fn">clamp</span>(<var>u</var><sub>0</sub> + <var>P</var>[<var>k</var>] + <var>I</var>[<var>k</var>] + <var>D</var>[<var>k</var>], 0 %, 100 %)
+                </span>
+              </div>
+            </div>
           </article>
           <article class="formula-card">
             <h3>Parameter</h3>
