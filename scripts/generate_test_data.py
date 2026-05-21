@@ -22,6 +22,7 @@ OUT_FILE = ROOT / "data" / "simulated_charge_log.csv"
 LOW_V = 3.85
 HIGH_V = 4.00
 PID_SETPOINT_V = (LOW_V + HIGH_V) / 2.0
+PID_BIAS_PERCENT = 50.0
 PID_KP = 850.0  # percent per volt
 PID_KI = 2.4  # percent per volt-minute
 PID_KD = 55.0  # percent-minute per volt
@@ -110,7 +111,8 @@ def simulate() -> list[dict[str, object]]:
         pid_p = PID_KP * error_v
         pid_i = PID_KI * pid_integral
         pid_d = PID_KD * derivative_v_per_min
-        pid_output = clamp(pid_p + pid_i + pid_d, 0.0, 100.0)
+        pid_raw = PID_BIAS_PERCENT + pid_p + pid_i + pid_d
+        pid_output = clamp(pid_raw, 0.0, 100.0)
         pid_relay_request = 1 if pid_output >= 50.0 and temperature_c < TEMP_CUTOFF_C else 0
         previous_error = error_v
 
@@ -127,9 +129,12 @@ def simulate() -> list[dict[str, object]]:
                 "setpoint_high_v": HIGH_V,
                 "pid_setpoint_v": round(PID_SETPOINT_V, 4),
                 "voltage_error_v": round(error_v, 4),
+                "pid_integral_v_min": round(pid_integral, 4),
+                "pid_bias_percent": round(PID_BIAS_PERCENT, 1),
                 "pid_p_percent": round(pid_p, 2),
                 "pid_i_percent": round(pid_i, 2),
                 "pid_d_percent": round(pid_d, 2),
+                "pid_raw_percent": round(pid_raw, 1),
                 "pid_output_percent": round(pid_output, 1),
                 "pid_relay_request": pid_relay_request,
                 "temperature_cutoff_c": TEMP_CUTOFF_C,

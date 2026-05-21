@@ -91,20 +91,36 @@ Ein PID-Regler wird im Projekt angewandt, aber bewusst nur als
 Referenzmodell fuer Datenanalyse und Regelungsverstaendnis. Der Ausgang
 `u_pid` wird nicht an den Akku oder den TP4056 ausgegeben.
 
-Als Sollwert dient die Mitte des Hysteresebands:
+Als Referenzwert dient die Mitte des Hysteresebands. Das ist kein
+Ladeschlusssollwert, sondern der neutrale Arbeitspunkt der Analyse:
 
 ```text
-w = (3,85 V + 4,00 V) / 2 = 3,925 V
-e[k] = w - y[k]
-I[k] = clamp(I[k-1] + e[k] * Delta t, I_min, I_max)
-D[k] = (e[k] - e[k-1]) / Delta t
-u_pid[k] = sat(Kp * e[k] + Ki * I[k] + Kd * D[k], 0 %, 100 %)
+U_ein = 3,85 V
+U_aus = 4,00 V
+w_ref = (U_ein + U_aus) / 2 = 3,925 V
+
+e[k] = w_ref - y[k]
+S[k] = clamp(S[k-1] + e[k] * T_s, S_min, S_max)
+
+P[k] = Kp * e[k]
+I[k] = Ki * S[k]
+D[k] = Kd * (e[k] - e[k-1]) / T_s
+
+u_roh[k] = u0 + P[k] + I[k] + D[k]
+u_pid[k] = clamp(u_roh[k], 0 %, 100 %)
 ```
+
+Dabei ist `S[k]` der Integralzustand in `V min`. Die Groessen `P[k]`,
+`I[k]` und `D[k]` sind bereits Ausgangsanteile in Prozent. Der Arbeitspunkt
+`u0 = 50 %` sorgt dafuer, dass `u_pid` bei `e[k] = 0` in der Mitte des
+virtuellen Stellbereichs liegt. Ohne diesen Arbeitspunkt waere ein
+unipolarer 0-100-%-Ausgang mathematisch verschoben.
 
 Verwendete Parameter der Simulation:
 
 | Parameter | Wert | Bedeutung |
 |---|---:|---|
+| `u0` | 50 % | Arbeitspunkt fuer den normierten PID-Ausgang |
 | `Kp` | 850 %/V | reagiert direkt auf Spannungsabweichung |
 | `Ki` | 2,4 %/(V min) | korrigiert bleibende Abweichung langsam |
 | `Kd` | 55 % min/V | daempft schnelle Aenderungen |

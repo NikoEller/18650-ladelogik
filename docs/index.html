@@ -37,7 +37,7 @@
           </p>
           <div class="hero-actions" aria-label="Projektkennzahlen">
             <span>3,85 V Einschaltpunkt</span>
-            <span>3,925 V PID-Sollwert</span>
+            <span>3,925 V PID-Referenz</span>
             <span>4,00 V Ausschaltpunkt</span>
             <span>45 Grad C Notabschaltung</span>
           </div>
@@ -143,18 +143,22 @@ u[k] = u[k-1], sonst</code></pre>
         <div class="math-grid">
           <article class="formula-card equation">
             <h3>Regelabweichung</h3>
-            <p><var>w</var> = (3,85 V + 4,00 V) / 2 = 3,925 V</p>
-            <p><var>e[k]</var> = <var>w</var> - <var>y[k]</var></p>
+            <p><var>w_ref</var> = (<var>U_ein</var> + <var>U_aus</var>) / 2</p>
+            <p><var>w_ref</var> = (3,85 V + 4,00 V) / 2 = 3,925 V</p>
+            <p><var>e[k]</var> = <var>w_ref</var> - <var>y[k]</var></p>
           </article>
           <article class="formula-card equation">
             <h3>PID-Gleichung</h3>
-            <p><var>I[k]</var> = clamp(<var>I[k-1]</var> + <var>e[k]</var> &middot; &Delta;t)</p>
-            <p><var>D[k]</var> = (<var>e[k]</var> - <var>e[k-1]</var>) / &Delta;t</p>
-            <p><var>u_pid[k]</var> = sat(<var>Kp</var>e + <var>Ki</var>I + <var>Kd</var>D)</p>
+            <p><var>S[k]</var> = clamp(<var>S[k-1]</var> + <var>e[k]</var> &middot; <var>T_s</var>, <var>S_min</var>, <var>S_max</var>)</p>
+            <p><var>P[k]</var> = <var>Kp</var> &middot; <var>e[k]</var></p>
+            <p><var>I[k]</var> = <var>Ki</var> &middot; <var>S[k]</var></p>
+            <p><var>D[k]</var> = <var>Kd</var> &middot; (<var>e[k]</var> - <var>e[k-1]</var>) / <var>T_s</var></p>
+            <p><var>u_pid[k]</var> = clamp(<var>u0</var> + <var>P[k]</var> + <var>I[k]</var> + <var>D[k]</var>, 0 %, 100 %)</p>
           </article>
           <article class="formula-card">
             <h3>Parameter</h3>
             <dl class="parameter-list">
+              <div><dt>u0</dt><dd>50 %</dd></div>
               <div><dt>Kp</dt><dd>850 %/V</dd></div>
               <div><dt>Ki</dt><dd>2,4 %/(V min)</dd></div>
               <div><dt>Kd</dt><dd>55 % min/V</dd></div>
@@ -163,6 +167,8 @@ u[k] = u[k-1], sonst</code></pre>
           </article>
         </div>
         <p class="callout">
+          <code>S[k]</code> ist der Integralzustand in V min; <code>P[k]</code>,
+          <code>I[k]</code> und <code>D[k]</code> sind Ausgangsanteile in Prozent.
           In echter Hardware waere der PID-Ausgang nur sinnvoll, wenn es einen
           sicheren proportionalen Aktor gaebe. Hier existiert nur ein Relais,
           also bleibt die reale Entscheidung Hysterese plus Grenzwertlogik.
