@@ -1,6 +1,6 @@
 # 18650 Ladelogik mit Raspberry Pi Pico und MicroPython
 
-Ein regelungstechnisches Bewerbungsprojekt zur uebergeordneten Ueberwachung
+Ein regelungstechnisches Embedded-Projekt zur uebergeordneten Ueberwachung
 des Ladevorgangs einer einzelnen geschuetzten 18650-Li-Ion-Zelle. Das sichere
 CC/CV-Laden uebernimmt ein fertiges TP4056-Lademodul mit Schutzschaltung. Der
 Raspberry Pi Pico misst, schaltet die 5-V-Versorgung des Lademoduls per Relais,
